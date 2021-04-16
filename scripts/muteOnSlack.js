@@ -12,7 +12,7 @@
 (function () {
   "use strict";
 
-  const usersToMute = ["U070R1YJD"];
+  const usersToMute = ["<user_id>"];
 
   const muteQuery = usersToMute
     .map((x) => `a[data-message-sender="${x}"]`)
