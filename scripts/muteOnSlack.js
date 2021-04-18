@@ -4,7 +4,7 @@
 // @version      0.1
 // @description  Mute users on Capitalmind Slack
 // @author       Vashistha Iyer
-// @match        https://app.slack.com/client/T04NJNVHN/*
+// @match        https://app.slack.com/client/T04NJNVHN*
 // @icon         https://www.google.com/s2/favicons?domain=slack.com
 // @grant        none
 // ==/UserScript==
@@ -26,12 +26,14 @@
       });
   });
 
-  observer.observe(document.querySelector("body"), {
-    subtree: true,
-    childList: true,
-    attributes: false,
-    characterData: false,
-    attributeOldValue: false,
-    characterDataOldValue: false,
+  window.addEventListener("load", function () {
+    observer.observe(document.querySelector("body"), {
+      subtree: true,
+      childList: true,
+      attributes: false,
+      characterData: false,
+      attributeOldValue: false,
+      characterDataOldValue: false,
+    });
   });
 })();
