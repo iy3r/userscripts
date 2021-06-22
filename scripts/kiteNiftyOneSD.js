@@ -13,6 +13,7 @@
     'use strict';
 
     // Selectors
+    const APP = 'div#app'
     const ELEMENT_THAT_MUTATES = '.pinned-instruments > .instrument-widget:nth-child(1) > span.wrap'
     const PINNED_1 = '.pinned-instruments > .instrument-widget:nth-child(1)'
     const PINNED_2 = '.pinned-instruments > .instrument-widget:nth-child(2)'
@@ -20,11 +21,7 @@
     const VIX = '.pinned-instruments > .instrument-widget:nth-child(2) span.last-price'
     const LOGO = '.header-right > .logo'
 
-    const observer = new MutationObserver(mutations => {
-        const nifty = Number(document.querySelector(NIFTY).innerText.trim())
-        const vix = Number(document.querySelector(VIX).innerText.trim())
-        const expiry_date = new Date(document.querySelector('#x-expiry-date > input').value)
-
+    function updateImpliedMove(nifty, vix, expiry_date) {
         const MS_PER_DAY = 1000 * 60 * 60 * 24;
         const days_to_expiry = (expiry_date - new Date()) / MS_PER_DAY
 
@@ -35,37 +32,71 @@
 
         document.querySelector("#x-sd-range").innerHTML = `<span style="margin-right: 0.5rem">${one_sd_below} - ${one_sd_above}</span><span class="text-xxsmall dim">${days_to_expiry.toFixed(2)} DTE</span>`
         document.querySelector("#x-sd-perc").innerHTML = `<span style="margin-right: 0.5rem;">${one_sd_perc.toFixed(2)}%</span><span class="text-xxsmall dim">${one_sd_move.toFixed(0)} points</span>`
+    }
+
+    function isMarketOpen() {
+        const marketOpen = 9 * 60 + 15 // minutes
+        const marketClosed = 15 * 60 + 30 // minutes
+        const now = new Date()
+        const currentTime = now.getHours() * 60 + now.getMinutes()
+        if(currentTime >= marketOpen && currentTime <= marketClosed) {
+            return true
+        }
+
+        return false
+    }
+
+    const tickObserver = new MutationObserver(mutations => {
+        const nifty = Number(document.querySelector(NIFTY).innerText.trim())
+        const vix = Number(document.querySelector(VIX).innerText.trim())
+        const expiry_date = new Date(document.querySelector('#x-expiry-date > input').value)
+
+        updateImpliedMove(nifty, vix, expiry_date)
     })
 
-    window.addEventListener("load", function() {
-        const sd_range = document.createElement('div')
-        sd_range.id = "x-sd-range"
-        sd_range.innerHTML = "0 - 0"
-        document.querySelector(PINNED_1).appendChild(sd_range)
+    // Initialize on app mount
+    const appMountCheck = setInterval(() => {
+        const hasMounted = document.querySelector(APP)?.__vue__ && document.querySelector(NIFTY) && document.querySelector(VIX)
 
-        const sd_perc = document.createElement('div')
-        sd_perc.id = "x-sd-perc"
-        sd_perc.innerHTML = "00%"
-        document.querySelector(PINNED_2).appendChild(sd_perc)
+        if (hasMounted) {
+            clearInterval(appMountCheck)
 
-        const today = new Date()
-        const y = today.getFullYear()
-        const m = String(today.getMonth() + 1).padStart(2, '0')
-        const d = String(today.getDate()).padStart(2, '0')
-        const default_expiry_date = `${y}-${m}-${d}T15:30`
+            const sd_range = document.createElement('div')
+            sd_range.id = "x-sd-range"
+            sd_range.innerHTML = "0 - 0"
+            document.querySelector(PINNED_1).appendChild(sd_range)
 
-        document.querySelector(LOGO).insertAdjacentHTML(
-            "afterend",
-            `
+            const sd_perc = document.createElement('div')
+            sd_perc.id = "x-sd-perc"
+            sd_perc.innerHTML = "00%"
+            document.querySelector(PINNED_2).appendChild(sd_perc)
+
+            const today = new Date()
+            const y = today.getFullYear()
+            const m = String(today.getMonth() + 1).padStart(2, '0')
+            const d = isMarketOpen() ? String(today.getDate()).padStart(2, '0') : String(today.getDate() + 1).padStart(2, '0')
+            const default_expiry_date = `${y}-${m}-${d}T15:30`
+
+            document.querySelector(LOGO).insertAdjacentHTML(
+                "afterend",
+                `
             <div id="x-expiry-date" style="display:flex; align-items: center;">
               <input type="datetime-local" value=${default_expiry_date} style="border: 1px solid var(--color-border-default); padding: 4px;"/>
             </div>
             `
-        );
+            );
 
-        observer.observe(document.querySelector(ELEMENT_THAT_MUTATES), {
-            subtree: true,
-            characterData: true
-        })
-    })
+            // Initialize
+            const nifty = Number(document.querySelector(NIFTY).innerText.trim())
+            const vix = Number(document.querySelector(VIX).innerText.trim())
+            const expiry_date = new Date(document.querySelector('#x-expiry-date > input').value)
+            updateImpliedMove(nifty, vix, expiry_date)
+
+            // Update on new ticks
+            tickObserver.observe(document.querySelector(ELEMENT_THAT_MUTATES), {
+                subtree: true,
+                characterData: true
+            })
+        }
+    }, 500)
 })();
