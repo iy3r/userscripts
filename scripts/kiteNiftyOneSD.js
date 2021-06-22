@@ -21,7 +21,11 @@
     const VIX = '.pinned-instruments > .instrument-widget:nth-child(2) span.last-price'
     const LOGO = '.header-right > .logo'
 
-    function updateImpliedMove(nifty, vix, expiry_date) {
+    function updateImpliedMove() {
+        const nifty = Number(document.querySelector(NIFTY).innerText.trim())
+        const vix = Number(document.querySelector(VIX).innerText.trim())
+        const expiry_date = new Date(document.querySelector('#x-expiry-date > input').value)
+
         const MS_PER_DAY = 1000 * 60 * 60 * 24;
         const days_to_expiry = (expiry_date - new Date()) / MS_PER_DAY
 
@@ -46,12 +50,8 @@
         return false
     }
 
-    const tickObserver = new MutationObserver(mutations => {
-        const nifty = Number(document.querySelector(NIFTY).innerText.trim())
-        const vix = Number(document.querySelector(VIX).innerText.trim())
-        const expiry_date = new Date(document.querySelector('#x-expiry-date > input').value)
-
-        updateImpliedMove(nifty, vix, expiry_date)
+    const tickObserver = new MutationObserver(() => {
+        updateImpliedMove()
     })
 
     // Initialize on app mount
@@ -87,10 +87,12 @@
             );
 
             // Initialize
-            const nifty = Number(document.querySelector(NIFTY).innerText.trim())
-            const vix = Number(document.querySelector(VIX).innerText.trim())
-            const expiry_date = new Date(document.querySelector('#x-expiry-date > input').value)
-            updateImpliedMove(nifty, vix, expiry_date)
+            updateImpliedMove()
+
+            // Register change handler for date picker
+            document.querySelector("#x-expiry-date > input").addEventListener('input', () => {
+                updateImpliedMove()
+            })
 
             // Update on new ticks
             tickObserver.observe(document.querySelector(ELEMENT_THAT_MUTATES), {
