@@ -32,7 +32,7 @@
 
         const pnl = today - yesterday
         const pnl_perc = pnl / yesterday * 100
-        const sign = pnl > 0 ? "+" : "-"
+        const sign = pnl > 0 ? "+" : ""
 
         const el = document.getElementById("x-daily-pnl-container")
         if (pnl > 0) { el.className="value text-green" }
