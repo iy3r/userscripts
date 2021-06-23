@@ -17,15 +17,20 @@
     const APP = 'div#app'
     const STATS_ROW = '.stats.row'
     const TICK = '.pinned-instruments > .instrument-widget:nth-child(1) > span.wrap'
+    const TABLE = '.data-table tbody > tr'
 
     function updateDailyPnL() {
         const holdings = document.querySelector(APP).__vue__.$store.getters["holdings/holdings"]
+        const prices = Array.from(document.querySelectorAll(TABLE))
+        .map(el => Array.from(el.querySelectorAll('td')))
+        .reduce((acc, cur) => ({...acc, [cur[0].querySelector("span:nth-child(1)").innerText]: Number(cur[3].innerText.replace(/,/g, ""))}), {})
 
         let yesterday = 0
         let today = 0
 
         for (let index = 0; index < holdings.length; index++) {
-            const { tradingsymbol, opening_quantity, close_price, last_price } = holdings[index]
+            const { tradingsymbol, opening_quantity, close_price } = holdings[index]
+            const last_price = prices[tradingsymbol]
             yesterday += opening_quantity * close_price
             today += opening_quantity * last_price
         }
